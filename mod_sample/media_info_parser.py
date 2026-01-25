@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import collections
 import os
+import shutil
 import subprocess
 import sys
 from collections import OrderedDict
@@ -205,8 +206,8 @@ class MediaInfoFetcher:
         :rtype: instance
         """
         from run import config
-        if not sys.platform.startswith("linux"):
-            raise InvalidMediaInfoError('Windows generation of MediaInfo unsupported')
+        if shutil.which('mediainfo') is None:
+            raise InvalidMediaInfoError('mediainfo command not found in PATH')
 
         media_folder = os.path.join(config.get('SAMPLE_REPOSITORY', ''), 'TestFiles')
         media_info_path = os.path.join(media_folder, 'media', sample.sha + '.xml')

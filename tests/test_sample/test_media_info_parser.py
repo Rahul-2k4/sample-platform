@@ -216,20 +216,22 @@ class TestMediaInfoFetcher(BaseTestCase):
         MOCK_MediaInfoFetcher.caption_tracks.append.assert_called_once()
         MOCK_MediaInfoFetcher._process_generic.assert_called_once_with(track, key_list)
 
-    @mock.patch('mod_sample.media_info_parser.sys')
-    def test_generate_media_xml_windows(self, mock_sys):
-        """Raise error when generating media info xml for windows."""
-        mock_sys.platform = 'windows'
+    @mock.patch('mod_sample.media_info_parser.shutil')
+    def test_generate_media_xml_no_mediainfo(self, mock_shutil):
+        """Raise error when mediainfo command is not available."""
+        mock_shutil.which.return_value = None
 
         with self.assertRaises(InvalidMediaInfoError):
             MediaInfoFetcher.generate_media_xml(MockSample())
 
+        mock_shutil.which.assert_called_once_with('mediainfo')
+
+    @mock.patch('mod_sample.media_info_parser.shutil')
     @mock.patch('mod_sample.media_info_parser.open')
     @mock.patch('mod_sample.media_info_parser.subprocess')
-    @mock.patch('mod_sample.media_info_parser.sys')
-    def test_generate_media_xml_not_file(self, mock_sys, mock_subprocess, mock_open):
+    def test_generate_media_xml_not_file(self, mock_subprocess, mock_open, mock_shutil):
         """Raise error when media_info_path is not a file."""
-        mock_sys.platform = 'linux'
+        mock_shutil.which.return_value = '/usr/bin/mediainfo'
 
         with self.assertRaises(InvalidMediaInfoError):
             MediaInfoFetcher.generate_media_xml(MockSample())
@@ -242,11 +244,11 @@ class TestMediaInfoFetcher(BaseTestCase):
     @mock.patch('mod_sample.media_info_parser.os')
     @mock.patch('mod_sample.media_info_parser.open')
     @mock.patch('mod_sample.media_info_parser.subprocess')
-    @mock.patch('mod_sample.media_info_parser.sys')
-    def test_generate_media_xml(self, mock_sys, mock_subprocess, mock_open, mock_os, mock_etree,
+    @mock.patch('mod_sample.media_info_parser.shutil')
+    def test_generate_media_xml(self, mock_shutil, mock_subprocess, mock_open, mock_os, mock_etree,
                                 mock_media_info_fetcher):
         """Test generate_media_xml method with valid information."""
-        mock_sys.platform = 'linux'
+        mock_shutil.which.return_value = '/usr/bin/mediainfo'
         mock_os.path.isfile.return_value = True
         response = MediaInfoFetcher.generate_media_xml(MockSample())
 
